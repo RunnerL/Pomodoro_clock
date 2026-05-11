@@ -1,0 +1,35 @@
+*{margin:0;padding:0;box-sizing:border-box}
+html,body,#root{width:100%;height:100%;overflow:hidden;background:transparent}
+body{font-family:'Inter','Noto Sans SC','Microsoft YaHei',-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+input:focus,textarea:focus,button:focus{outline:none}
+
+/* ====== 逐字动画 (用于计时器文字) ====== */
+.char-wrapper{display:inline-block;white-space:pre;transition:transform .4s ease-out,opacity .4s ease-out}
+
+.idle-sunny .char-wrapper{animation:sunnyFloat 4s ease-in-out infinite;animation-delay:var(--char-delay,0s)}
+@keyframes sunnyFloat{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-4px) rotate(1deg)}50%{transform:translateY(-2px) rotate(-.5deg)}75%{transform:translateY(-6px) rotate(.5deg)}}
+
+.idle-rain .char-wrapper{animation:rainSlide 2.5s ease-in infinite;animation-delay:var(--char-delay,0s)}
+@keyframes rainSlide{0%,5%{transform:translateY(0);opacity:1}15%{transform:translateY(28px);opacity:.3}28%{transform:translateY(2px);opacity:.4}42%{transform:translateY(20px);opacity:.22}55%{transform:translateY(50px);opacity:.12}68%{transform:translateY(8px);opacity:.35}80%{transform:translateY(12px);opacity:.22}95%,100%{transform:translateY(0);opacity:1}}
+
+.thunder-shocked .char-wrapper{animation:shocked .35s ease-out;animation-delay:var(--char-delay,0s)}
+@keyframes shocked{0%{transform:translate(0,0) scale(1)}10%{transform:translate(calc(var(--sx,3px)*-1),calc(var(--sy,3px)*-1)) scale(1.15)}20%{transform:translate(var(--sx,3px),var(--sy,3px)) scale(.92)}35%{transform:translate(calc(var(--sx,3px)*-.5),calc(var(--sy,3px)*-.5)) scale(1.05)}55%{transform:translate(calc(var(--sx,3px)*.3),calc(var(--sy,3px)*.3)) scale(.97)}75%{transform:translate(0,0) scale(1.01)}100%{transform:translate(0,0) scale(1)}}
+
+.idle-wind .char-wrapper{animation:windBlown 3s ease-in-out infinite;animation-delay:var(--char-delay,0s)}
+@keyframes windBlown{0%,100%{transform:translateX(0) rotate(0deg) scale(1);opacity:1}15%{transform:translateX(5px) rotate(7deg) scale(1.02)}30%{transform:translateX(-4px) rotate(-5deg) scale(.98)}45%{transform:translateX(9px) rotate(11deg) scale(1.03);opacity:.84}60%{transform:translateX(-7px) rotate(-9deg) scale(.96)}75%{transform:translateX(3px) rotate(5deg) scale(.99);opacity:.88}90%{transform:translateX(-1px) rotate(-2deg) scale(1)}}
+
+/* ====== Todo 面板整体天气动效 (预览模式下整个面板浮动) ====== */
+.idle-sunny .todo-content{animation:panelSunnyFloat 5s ease-in-out infinite}
+@keyframes panelSunnyFloat{0%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}60%{transform:translateY(-3px)}}
+
+.idle-rain .todo-content{animation:panelRainDrip 3s ease-in-out infinite}
+@keyframes panelRainDrip{0%,100%{transform:translateY(0);opacity:1}20%{transform:translateY(15px);opacity:.85}40%{transform:translateY(3px);opacity:.7}50%{transform:translateY(40px);opacity:.6}65%{transform:translateY(6px);opacity:.75}80%{transform:translateY(10px);opacity:.8}95%{transform:translateY(0);opacity:1}}
+
+.idle-wind .todo-content{animation:panelWindWobble 4s ease-in-out infinite}
+@keyframes panelWindWobble{0%,100%{transform:translateX(0) rotate(0deg)}20%{transform:translateX(6px) rotate(1deg)}50%{transform:translateX(-5px) rotate(-.8deg)}75%{transform:translateX(3px) rotate(.5deg)}}
+
+.thunder-shocked .todo-content{animation:panelShock .4s ease-out}
+@keyframes panelShock{0%{transform:translate(0,0)}15%{transform:translate(-6px,-4px)}30%{transform:translate(5px,3px)}50%{transform:translate(-3px,-2px)}70%{transform:translate(1px,1px)}100%{transform:translate(0,0)}}

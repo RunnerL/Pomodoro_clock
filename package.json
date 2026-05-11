@@ -1,0 +1,60 @@
+{
+  "name": "pomodoro-clock",
+  "version": "1.0.0",
+  "description": "Pomodoro + Todo + Calendar",
+  "author": "Pomodoro Clock",
+  "main": "dist-electron/main/index.js",
+  "scripts": {
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
+    "dev:electron": "tsc -p src/main/tsconfig.json && tsc -p src/preload/tsconfig.json && electron .",
+    "build:main": "tsc -p src/main/tsconfig.json && tsc -p src/preload/tsconfig.json",
+    "build:renderer": "vite build",
+    "build": "npm run build:renderer && npm run build:main && electron-builder",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.1",
+    "date-fns": "^4.1.0",
+    "electron": "28.0.0",
+    "electron-builder": "^25.0.1",
+    "lucide-react": "^1.14.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sharp": "^0.34.5",
+    "sharp-ico": "^0.1.5",
+    "to-ico": "^1.1.5",
+    "typescript": "5.3.3",
+    "vite": "^5.4.21",
+    "wait-on": "^9.0.5",
+    "zustand": "^5.0.13"
+  },
+  "build": {
+    "appId": "com.pomodoro.clock",
+    "productName": "PomodoroClock",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis",
+      "sign": null,
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "public/icon.ico",
+      "uninstallerIcon": "public/icon.ico"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "public/**/*"
+    ],
+    "extraResources": [],
+    "asar": true,
+    "compression": "maximum"
+  }
+}
