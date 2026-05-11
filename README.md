@@ -97,7 +97,7 @@
 
 ```bash
 # 克隆项目
-git clone <repo-url>
+git clone https://github.com/RunnerL/Pomodoro_clock.git
 cd pomodoro-clock
 
 # 安装依赖
@@ -109,6 +109,17 @@ npm run dev
 # 构建生产版本
 npm run build
 ```
+
+### 🔨 Windows 一键构建
+
+如果你使用 Windows 系统，可以直接双击运行 `build.bat`，脚本会自动完成以下操作：
+
+1. ✅ 检测 Node.js 是否安装
+2. 📦 自动安装项目依赖（`npm install`）
+3. 🔨 构建并打包为 `.exe` 安装程序
+4. 📂 构建完成后可选择打开 `release/` 目录
+
+> **前提条件**：需要安装 [Node.js 18 LTS](https://nodejs.org/zh-cn/download/) 或更高版本。
 
 ### 项目结构
 
