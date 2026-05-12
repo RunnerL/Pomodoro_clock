@@ -5,6 +5,7 @@ body{font-family:'Inter','Noto Sans SC','Microsoft YaHei',-apple-system,sans-ser
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
 input:focus,textarea:focus,button:focus{outline:none}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ====== 逐字动画 (用于计时器文字) ====== */
 .char-wrapper{display:inline-block;white-space:pre;transition:transform .4s ease-out,opacity .4s ease-out}

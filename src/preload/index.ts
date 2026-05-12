@@ -14,6 +14,7 @@ const electronAPI = {
   sendNotification: (title: string, body: string) => ipcRenderer.invoke('send-notification', title, body),
   setMinWidth: (width: number) => ipcRenderer.invoke('set-min-width', width),
   showWindow: () => ipcRenderer.invoke('show-window'),
+  listTodoFiles: (dirPath: string) => ipcRenderer.invoke('list-todo-files', dirPath) as Promise<{ dateKey: string; date: string; filename: string }[]>,
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)

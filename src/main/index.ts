@@ -137,6 +137,28 @@ ipcMain.handle('show-window', () => {
   mainWindow?.focus()
 })
 
+ipcMain.handle('list-todo-files', async (_e: any, dirPath: string) => {
+  try {
+    const files = fs.readdirSync(dirPath)
+    const re = /^工作日志_(\d{2})(\d{2})(\d{2})\.md$/
+    const results: { dateKey: string; date: string; filename: string }[] = []
+    for (const f of files) {
+      const m = f.match(re)
+      if (m) {
+        const dateKey = m[1] + m[2] + m[3] // yyMMdd
+        const year = 2000 + parseInt(m[1], 10)
+        results.push({
+          dateKey,
+          date: `${year}-${m[2]}-${m[3]}`,
+          filename: f,
+        })
+      }
+    }
+    results.sort((a, b) => b.date.localeCompare(a.date))
+    return results
+  } catch { return [] }
+})
+
 app.whenReady().then(() => {
   createWindow()
   createTray()

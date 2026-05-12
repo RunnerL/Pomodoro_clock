@@ -61,6 +61,8 @@ export interface AppState {
   setTodoSyncOpen: (v: boolean) => void
   sendNotification: (title: string, body: string) => void
   checkYesterdayTodos: () => Promise<void>
+  fetchAvailableDates: () => Promise<{ dateKey: string; date: string; filename: string }[]>
+  openSyncForDate: (dateKey: string) => Promise<void>
 }
 
 function parseUncompletedTodos(content: string): string[] {
@@ -150,6 +152,63 @@ const useAppStore = create<AppState>()((set, get) => ({
   },
   setPendingSync: (date, items) => set({ pendingSyncDate: date, pendingSyncItems: items }),
   setTodoSyncOpen: (v) => set({ todoSyncOpen: v }),
+
+  fetchAvailableDates: async () => {
+    const { savePath, currentDate } = get()
+    if (!savePath || !window.electronAPI) return []
+    const files = await window.electronAPI.listTodoFiles(savePath)
+
+    // Calculate ±7 days range from currentDate
+    const today = new Date(currentDate)
+    const validKeys = new Set<string>()
+    validKeys.add(format(today, 'yyMMdd'))
+    for (let i = 1; i <= 7; i++) {
+      const before = new Date(today)
+      before.setDate(before.getDate() - i)
+      validKeys.add(format(before, 'yyMMdd'))
+      const after = new Date(today)
+      after.setDate(after.getDate() + i)
+      validKeys.add(format(after, 'yyMMdd'))
+    }
+
+    // Only show dates within ±7 days, exclude today
+    const todayKey = format(today, 'yyMMdd')
+    return files.filter((f) => f.dateKey !== todayKey && validKeys.has(f.dateKey))
+  },
+
+  openSyncForDate: async (dateKey: string) => {
+    const { savePath } = get()
+    if (!savePath || !window.electronAPI) return
+    const fn = `${savePath}\\工作日志_${dateKey}.md`
+    const exists = await window.electronAPI.fileExists(fn)
+    if (!exists) {
+      alert('该日期的工作日志文件不存在')
+      return
+    }
+    const content = await window.electronAPI.readFile(fn)
+    if (!content || !content.trim()) {
+      // Parse display date for the alert
+      const dYY = 2000 + parseInt(dateKey.slice(0, 2), 10)
+      const dMM = dateKey.slice(2, 4)
+      const dDD = dateKey.slice(4, 6)
+      alert(`${dYY}-${dMM}-${dDD} 的工作日志中没有待办事项`)
+      return
+    }
+    const items = parseUncompletedTodos(content)
+    if (items.length === 0) {
+      const dYY = 2000 + parseInt(dateKey.slice(0, 2), 10)
+      const dMM = dateKey.slice(2, 4)
+      const dDD = dateKey.slice(4, 6)
+      alert(`${dYY}-${dMM}-${dDD} 的工作日志中没有待办事项`)
+      return
+    }
+    // Parse yyyy-MM-dd from dateKey
+    const yy = 2000 + parseInt(dateKey.slice(0, 2), 10)
+    const mm = dateKey.slice(2, 4)
+    const dd = dateKey.slice(4, 6)
+    const fullDate = `${yy}-${mm}-${dd}`
+    set({ pendingSyncDate: fullDate, pendingSyncItems: items, todoSyncOpen: true })
+  },
 
   sendNotification: (title, body) => {
     if (window.electronAPI) window.electronAPI.sendNotification(title, body)
