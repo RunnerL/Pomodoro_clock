@@ -56,6 +56,23 @@ const App: React.FC = () => {
     return () => clearInterval(id)
   }, [timerState, tick])
 
+  // Poll for mini window timer commands
+  useEffect(() => {
+    const poll = setInterval(async () => {
+      if (!window.electronAPI) return
+      try {
+        const cmd = await (window.electronAPI as any).getPendingTimerCommand?.()
+        if (!cmd) return
+        const store = useAppStore.getState()
+        if (cmd === 'start') store.startTimer()
+        else if (cmd === 'pause') store.pauseTimer()
+        else if (cmd === 'switch-work') store.switchMode('work')
+        else if (cmd === 'switch-rest') store.switchMode('rest')
+      } catch {}
+    }, 300)
+    return () => clearInterval(poll)
+  }, [])
+
   // Date
   useEffect(() => { setCurrentDate(format(new Date(), 'yyyy-MM-dd')) }, [setCurrentDate])
 

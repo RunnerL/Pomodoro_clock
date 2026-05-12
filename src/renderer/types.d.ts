@@ -17,6 +17,13 @@ declare global {
       setMinWidth: (width: number) => Promise<boolean>
       showWindow: () => Promise<void>
       listTodoFiles: (dirPath: string) => Promise<{ dateKey: string; date: string; filename: string }[]>
+      reportTimerState: (data: { remainingSeconds: number; mode: string; timerState: string; weatherType: string }) => Promise<void>
+      getTimerState: () => Promise<{ remainingSeconds: number; mode: string; timerState: string; weatherType: string } | null>
+      restoreMainWindow: () => Promise<void>
+      miniTimerCommand: (command: string) => Promise<void>
+      getPendingTimerCommand: () => Promise<string | null>
+      getAlwaysOnTopSetting: () => Promise<boolean>
+      closeMiniWindow: () => Promise<void>
     }
   }
 }

@@ -75,6 +75,17 @@ function parseUncompletedTodos(content: string): string[] {
   return items
 }
 
+function syncTimerToMain() {
+  if (!window.electronAPI) return
+  const s = useAppStore.getState()
+  window.electronAPI.reportTimerState({
+    remainingSeconds: s.remainingSeconds,
+    mode: s.mode,
+    timerState: s.timerState,
+    weatherType: s.weatherType,
+  })
+}
+
 const useAppStore = create<AppState>()((set, get) => ({
   workDuration: 45, restDuration: 10,
   timerState: 'idle', mode: 'work',
@@ -101,11 +112,18 @@ const useAppStore = create<AppState>()((set, get) => ({
     if (get().timerState === 'idle' && get().mode === 'rest')
       set({ remainingSeconds: d * 60, progress: 0 })
   },
-  startTimer: () => set({ timerState: 'running' }),
-  pauseTimer: () => set({ timerState: 'paused' }),
+  startTimer: () => {
+    set({ timerState: 'running' })
+    syncTimerToMain()
+  },
+  pauseTimer: () => {
+    set({ timerState: 'paused' })
+    syncTimerToMain()
+  },
   resetTimer: () => {
     const { mode, workDuration, restDuration } = get()
     set({ timerState: 'idle', remainingSeconds: (mode === 'work' ? workDuration : restDuration) * 60, progress: 0 })
+    syncTimerToMain()
   },
   tick: () => {
     const { timerState, remainingSeconds, mode, workDuration, restDuration, autoCycle } = get()
@@ -115,6 +133,8 @@ const useAppStore = create<AppState>()((set, get) => ({
     const total = (mode === 'work' ? workDuration : restDuration) * 60
     set({ remainingSeconds: n, progress: 1 - n / total })
 
+    syncTimerToMain()
+
     if (n <= 0) {
       if (mode === 'work') {
         get().sendNotification('🍅 专注完成！', `恭喜你专注了 ${workDuration} 分钟，现在起身休息一下吧！`)
@@ -123,11 +143,13 @@ const useAppStore = create<AppState>()((set, get) => ({
         get().sendNotification('☕ 休息完成！', '休息完啦，开始攻克下一个任务吧！')
         set({ mode: 'work', remainingSeconds: workDuration * 60, progress: 0, timerState: autoCycle ? 'running' : 'idle' })
       }
+      syncTimerToMain()
     }
   },
   switchMode: (m) => {
     const { workDuration, restDuration } = get()
     set({ mode: m, timerState: 'idle', remainingSeconds: (m === 'work' ? workDuration : restDuration) * 60, progress: 0 })
+    syncTimerToMain()
   },
   setAutoCycle: (v) => set({ autoCycle: v }),
   triggerLightning: () => set((s) => ({ lightningTrigger: s.lightningTrigger + 1 })),

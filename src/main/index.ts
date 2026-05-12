@@ -1,10 +1,16 @@
-import { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, nativeImage } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, nativeImage, screen } from 'electron'
 import path from 'path'
 import fs from 'fs'
 
 let mainWindow: BrowserWindow | null = null
+let miniWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 const settingsPath = path.join(app.getPath('userData'), 'settings.json')
+
+let timerStateCache: { remainingSeconds: number; mode: string; timerState: string; weatherType: string } = {
+  remainingSeconds: 0, mode: 'work', timerState: 'idle', weatherType: 'sunny',
+}
+let appSettingsCache: { alwaysOnTop: boolean } = { alwaysOnTop: true }
 
 if (process.platform === 'win32') app.setAppUserModelId('com.pomodoro.clock')
 
@@ -72,10 +78,11 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'))
 
-  // Minimize to tray instead of closing
+  // Minimize → hide to tray + show mini window
   mainWindow.on('minimize', (event: any) => {
     event.preventDefault()
     mainWindow?.hide()
+    if (!miniWindow) createMiniWindow('top')
   })
 
   mainWindow.on('close', (event: any) => {
@@ -86,6 +93,42 @@ function createWindow() {
   })
 
   mainWindow.on('closed', () => { mainWindow = null })
+
+  }
+
+function createMiniWindow(anchor: 'top' | 'bottom') {
+  if (miniWindow) return
+  const disp = screen.getPrimaryDisplay()
+  const { width: sw, x: sx, y: sy, height: sh } = disp.workArea
+  const mw = 280, mh = 68
+
+  miniWindow = new BrowserWindow({
+    width: mw, height: mh,
+    x: Math.round(sx + (sw - mw) / 2),
+    y: anchor === 'top' ? sy : sy + sh - mh,
+    frame: false, transparent: true, resizable: false,
+    alwaysOnTop: appSettingsCache.alwaysOnTop, skipTaskbar: true,
+    focusable: true, type: 'toolbar',
+    backgroundColor: '#00000000',
+    icon: path.join(__dirname, '../../public/icon.png'),
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/index.js'),
+      contextIsolation: true, nodeIntegration: false,
+    },
+  })
+
+  miniWindow.loadFile(path.join(__dirname, '../../dist/index.html'), {
+    query: { mini: 'true', anchor },
+  })
+
+  miniWindow.on('closed', () => { miniWindow = null })
+}
+
+function destroyMiniWindow() {
+  if (miniWindow) {
+    miniWindow.close()
+    miniWindow = null
+  }
 }
 
 // === IPC ===
@@ -108,17 +151,37 @@ ipcMain.handle('write-file', async (_e: any, fp: string, content: string) => {
 ipcMain.handle('file-exists', async (_e: any, fp: string) => fs.existsSync(fp))
 ipcMain.handle('minimize-window', () => mainWindow?.minimize())
 ipcMain.handle('close-window', () => {
-  if (tray) { mainWindow?.hide() }
-  else { mainWindow?.close(); app.quit() }
+  if (tray) {
+    mainWindow?.hide()
+    if (!miniWindow) createMiniWindow('top')
+  } else { mainWindow?.close(); app.quit() }
 })
 
-ipcMain.handle('get-settings', () => getSettings())
-ipcMain.handle('save-settings', (_e: any, data: Record<string, any>) => { saveSettings(data); return true })
+ipcMain.handle('close-mini-window', () => {
+  // Close mini window, app stays in tray
+  destroyMiniWindow()
+})
+
+ipcMain.handle('get-settings', () => {
+  const s = getSettings()
+  appSettingsCache.alwaysOnTop = s.alwaysOnTop !== undefined ? s.alwaysOnTop : true
+  return s
+})
+ipcMain.handle('save-settings', (_e: any, data: Record<string, any>) => {
+  if (data.alwaysOnTop !== undefined) appSettingsCache.alwaysOnTop = data.alwaysOnTop
+  saveSettings(data)
+  return true
+})
 
 ipcMain.handle('set-always-on-top', (_e: any, flag: boolean) => {
+  appSettingsCache.alwaysOnTop = flag
   if (!mainWindow) return false
   mainWindow.setAlwaysOnTop(false)
   if (flag) { mainWindow.setAlwaysOnTop(true, 'screen-saver'); mainWindow.moveTop() }
+  if (miniWindow) {
+    miniWindow.setAlwaysOnTop(false)
+    if (flag) { miniWindow.setAlwaysOnTop(true, 'screen-saver'); miniWindow.moveTop() }
+  }
   return true
 })
 ipcMain.handle('set-window-opacity', (_e: any, opacity: number) => {
@@ -159,13 +222,53 @@ ipcMain.handle('list-todo-files', async (_e: any, dirPath: string) => {
   } catch { return [] }
 })
 
+// === Mini window IPC ===
+ipcMain.handle('report-timer-state', (_e: any, data: { remainingSeconds: number; mode: string; timerState: string; weatherType: string }) => {
+  timerStateCache = data
+})
+
+ipcMain.handle('get-timer-state', () => {
+  return timerStateCache
+})
+
+ipcMain.handle('restore-main-window', () => {
+  destroyMiniWindow()
+  mainWindow?.show()
+  mainWindow?.focus()
+})
+
+// Timer control from mini window → relayed to main window
+let pendingTimerCommand: string | null = null
+
+ipcMain.handle('mini-timer-command', (_e: any, command: string) => {
+  pendingTimerCommand = command
+})
+
+ipcMain.handle('get-pending-timer-command', () => {
+  const cmd = pendingTimerCommand
+  pendingTimerCommand = null
+  return cmd
+})
+
+// AlwaysOnTop setting for mini window
+ipcMain.handle('get-always-on-top-setting', () => {
+  return appSettingsCache.alwaysOnTop
+})
+
 app.whenReady().then(() => {
   createWindow()
   createTray()
   app.on('activate', () => {
+    if (miniWindow) {
+      destroyMiniWindow()
+    }
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
     else mainWindow?.show()
   })
+})
+
+app.on('before-quit', () => {
+  destroyMiniWindow()
 })
 
 // Prevent app quit when all windows are closed
