@@ -38,8 +38,12 @@
 ### 🔧 其他特性
 - 窗口始终置顶（可开关）
 - 窗口透明度可调节（仅影响背景，不影响文字）
+- 最小化自动弹出浮窗，显示倒计时和快捷控制
+- 浮窗支持一键切换专注/休息模式
+- 双击浮窗恢复完整窗口
 - 最小化到系统托盘，不占用任务栏
 - 跨天未完成待办自动提醒同步
+- 手动同步历史待办，支持选择 ±7 天内任意日志
 
 ## 🚀 快速开始
 
@@ -112,14 +116,24 @@ npm run build
 
 ### 🔨 Windows 一键构建
 
-如果你使用 Windows 系统，可以直接双击运行 `build.bat`，脚本会自动完成以下操作：
+**方式一 —— PowerShell 脚本（推荐）：**
 
-1. ✅ 检测 Node.js 是否安装
-2. 📦 自动安装项目依赖（`npm install`）
-3. 🔨 构建并打包为 `.exe` 安装程序
-4. 📂 构建完成后可选择打开 `release/` 目录
+```powershell
+cd pomodoro-clock
+powershell -ExecutionPolicy Bypass -File build.ps1
+```
 
-> **前提条件**：需要安装 [Node.js 18 LTS](https://nodejs.org/zh-cn/download/) 或更高版本。
+**方式二 —— CMD：**
+
+双击 `build.bat`（只能在 cmd.exe 中运行，不要在 PowerShell 中粘贴）。
+
+脚本会自动完成：
+1. 检测 Node.js
+2. 安装依赖（npm install）
+3. 构建打包为 .exe
+
+> **前提条件**：需要安装 [Node.js 18 LTS](https://nodejs.org/en/download/) 或更高版本。
+> **注意**：构建前请确保 PomodoroClock 已完全退出（含系统托盘）。
 
 ### 项目结构
 
